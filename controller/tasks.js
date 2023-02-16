@@ -1,30 +1,30 @@
 const Task = require('../models/Task')
+const asyncWrapper = require('../middlewares/async')
+const {CustomAPIError, createCustomError} = require('../errors/custom-error')
 
 class TaskController {
 
- gettAllTasks = async (req, res) => {
+ gettAllTasks = asyncWrapper( async (req, res) => {
     const tasks = await Task.find({})
     res.status(200).json({tasks})
-}
+})
 
- getTask = async (req, res) => {
+ getTask = asyncWrapper( async (req, res, next) => {
     const { id: taskId } = req.params
     const task = await Task.findOne({_id: taskId})
 
     if(!task) {
-        const error = new Error('Task not found')
-        error.status = 404
-        return res.json(error)
+        return next(createCustomError(`No task with id: ${taskId}`, 404))
     }
     res.status(200).json({task})
-}
+})
 
- createTask = async (req, res) => {
+ createTask = asyncWrapper( async (req, res) => {
     const task = await Task.create(req.body)
     res.status(201).json({ task })
-}
+})
 
- editTask = async (req, res) => {
+ editTask = asyncWrapper( async (req, res) => {
     const { id: taskId } = req.params
     const task = await Task.findOneAndUpdate({_id: taskId}, req.body, {
         new: true,
@@ -32,22 +32,22 @@ class TaskController {
     })
 
     if(!task) {
-        return res.status(404).json({msg: 'Task can not be edited'})
+        return next(createCustomError(`No task with id: ${taskId}`, 404))
     }
     res.status(200).json({task})
-} 
+})
 
- deleteTask = async (req, res) => {
+ deleteTask = asyncWrapper( async (req, res) => {
     const {id: taskId} = req.params
     const task = await Task.findByIdAndDelete({_id: taskId})
 
     if(!task) {
-        return res.status(404).json({msg: 'No task with id ' + taskId })
+        return next(createCustomError(`No task with id: ${taskId}`, 404))
     }
 
     res.status(200).json({task: null, status: 'success'})
 
- }
+ })
 
 }
 
